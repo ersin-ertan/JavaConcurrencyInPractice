@@ -28,7 +28,7 @@ public class SafeCache{
 		synchronized(this){
 			++hits;
 			if(i.equals(lastNum)){/* logic */}
-			;
+
 		}
 		boolean moreLogic = true;
 		if(moreLogic){

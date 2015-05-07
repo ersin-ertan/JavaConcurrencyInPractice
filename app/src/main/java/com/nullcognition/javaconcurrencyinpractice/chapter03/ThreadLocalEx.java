@@ -1,63 +1,105 @@
-package com.nullcognition.javaconcurrencyinpractice.chapter03;// Created by ersin on 06/05/15
+package com.nullcognition.javaconcurrencyinpractice.chapter03;
+// Created by ersin on 06/05/15
 
 // associate a per-thread value with a value-holding object being the thread local
 
 import android.util.Log;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Date;
 
-public class ThreadLocalEx implements Runnable{
+public class ThreadLocalEx{
 
-	// hidden to only inside this class, but each instance increments it
-	static private AtomicInteger atomicInteger = new AtomicInteger(0);
+	public void initOverwriteThreadsWithOneRunnable(){
 
-	// this runnable does not give the thread access to the public atomic int, but can be via runnable
-	static public AtomicInteger atomicIntegerPublic = new AtomicInteger(0);
+		Thread[] threads = new Thread[10];
+		Runnable sharedRunnable = new SharedOverwriteRunnable();
 
-	ThreadLocal<Integer> integerThreadLocalUnInit = new ThreadLocal<>();
-
-	ThreadLocal<Integer> integerThreadLocalInit = new ThreadLocal<Integer>(){
-		@Override
-		protected Integer initialValue(){
-			return 1;
+		for(int i = 0; i < 10; i++){
+			threads[i] = new Thread(sharedRunnable);
+			threads[i].start();
+			try{
+				Thread.sleep(1_000); // every thread is created/started 1 second apart
+			} catch(InterruptedException e){
+				e.printStackTrace();
+			}
 		}
-	};
+	}
 
-	static public ThreadLocal<Integer> integerThreadLocalInitStaticPublic = new ThreadLocal<Integer>(){
-		@Override
-		protected Integer initialValue(){
-			return 10;
+	public void initCleanThreadsWithOneRunnable(){
+
+		Thread[] threads = new Thread[10];
+		Runnable sharedRunnable = new SharedCleanRunnable();
+
+		for(int i = 0; i < 10; i++){
+			threads[i] = new Thread(sharedRunnable);
+			threads[i].start();
+			try{
+				Thread.sleep(1_000); // every thread is created/started 1 second apart
+			} catch(InterruptedException e){
+				e.printStackTrace();
+			}
 		}
-	};
+	}
+}
 
-	static private ThreadLocal<Integer> integerThreadLocalInitStaticPrivate = new ThreadLocal<Integer>(){
-		@Override
-		protected Integer initialValue(){
-			return 100;
-		}
-	};
-	// requires get method
-	public static Integer getITLISP(){ return integerThreadLocalInitStaticPrivate.get();}
+class SharedOverwriteRunnable implements Runnable{
 
+	private Date date;
 
+	public SharedOverwriteRunnable(){ }
 
 	@Override
 	public void run(){
-		// static variables values persist when in the runnable in multiple threads, each thread gets a +1 value
-		Log.e("logErr", "atomic int " + atomicInteger.getAndIncrement() + " from thread " + Thread.currentThread().getName());
 
-		Log.e("logErr", "atomic int public " + atomicIntegerPublic.getAndIncrement() + " from thread " + Thread.currentThread().getName());
+		date = new Date();
+		Log.e("logErr", Thread.currentThread().getName() + " start date:" + date);
+		try{
+			Thread.sleep(10_000); // each thread posts their start time which should be
+			// 1 second apart as per the initialization
+		} catch(InterruptedException e){
+			e.printStackTrace();
+		}
+		// after the 10 second wait that each runnable goes through each of the 10 threads should be
+		// done being created because 10 threads with a 1 second interval = 10*1 = 10 seconds
 
-		Log.e("logErr", "integer thread local UnInitialized " + integerThreadLocalUnInit.get());
+		// posting the end date should repeat the value not of the start date, but that of the start
+		// of only the last thread, since all other threads do post their start date but are overwitten
+		// by the last threads value
+		Log.e("logErr", Thread.currentThread().getName() + " end date:" + date);
 
-		Log.e("logErr", "integer thread local Initialized " + integerThreadLocalInit.get());
 
-		Log.e("logErr", "integer thread local Initialized static " + getITLISP());
+		// for(;;){}; // infinite spider
+	}
+}
 
-		Log.e("logErr", "It is known that only the atomic int incr due ot the get and Inc" +
-				"\nNow to test the same runnable but in another thread");
 
-		Log.e("logErr", "----------");
+class SharedCleanRunnable implements Runnable{
+
+	// second type param is required when creating an anon inner class
+	private ThreadLocal<Date> date = new ThreadLocal<Date>(){
+		@Override
+		protected Date initialValue(){
+			return new Date();
+		}
+	};
+
+	public SharedCleanRunnable(){ }
+
+	@Override
+	public void run(){
+
+		Log.e("logErr", Thread.currentThread().getName() + " start date:" + date.get());
+		try{
+			Thread.sleep(10_000);
+		} catch(InterruptedException e){
+			e.printStackTrace();
+		}
+		Log.e("logErr", Thread.currentThread().getName() + " end date:" + date.get());
+
+		// what the date.get() method allows for is keeping the value returned consistent to the
+		// thread that initialized/set the variable
+
+		// each thread has its own instance of the variables value, but there is only one variable
 
 
 	}
