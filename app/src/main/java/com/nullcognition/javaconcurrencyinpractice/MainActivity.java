@@ -2,10 +2,9 @@ package com.nullcognition.javaconcurrencyinpractice;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 
 import com.nullcognition.javaconcurrencyinpractice.chapter03.ThreadLocalEx;
-import com.nullcognition.javaconcurrencyinpractice.chapter03.ThreadStates;
+import com.nullcognition.javaconcurrencyinpractice.chapter03.ThreadSync;
 
 
 public class MainActivity extends ActionBarActivity{
@@ -16,16 +15,8 @@ public class MainActivity extends ActionBarActivity{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		threadLocal();
-//		threadSleeps();
-	}
-
-	private void threadSleeps(){
-		ThreadStates threadStates = new ThreadStates(true);
-		ThreadStates threadStates1 = new ThreadStates(false);
-		threadStates.start();
-		threadStates1.start();
-		int i = 0;
+//		threadLocal();
+		threadSync();
 	}
 
 	private void threadLocal(){
@@ -44,6 +35,50 @@ running as part of the parameters passed to each of the activities, the service 
 ThreadLocal<Context> context; that it  when a thread(activity)
 "used to prevent sharing in designs based on mutable Singletons or global variables"
 */
+	}
+
+	private void threadSync(){
+		ThreadSync threadSync = new ThreadSync();
+		class Producer implements Runnable{
+
+			ThreadSync ts;
+
+			public Producer(ThreadSync t){ts = t;}
+
+			@Override
+			public void run(){
+				for(;;){
+					try{
+						ts.add();
+					} catch(InterruptedException e){
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		class Consumer implements Runnable{
+
+			ThreadSync ts;
+
+			public Consumer(ThreadSync t){ts = t;}
+
+			@Override
+			public void run(){
+				for(;;){
+					try{
+						ts.remove();
+					} catch(InterruptedException e){
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+
+		Thread t1 = new Thread(new Producer(threadSync));
+		Thread t2 = new Thread(new Consumer(threadSync));
+		t1.start();
+		t2.start();
+
 	}
 
 }
