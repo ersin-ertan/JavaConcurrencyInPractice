@@ -5,6 +5,7 @@ import android.support.v7.app.ActionBarActivity;
 
 import com.nullcognition.javaconcurrencyinpractice.chapter03.ThreadLocalEx;
 import com.nullcognition.javaconcurrencyinpractice.chapter03.ThreadSync;
+import com.nullcognition.javaconcurrencyinpractice.chapter03.practice.P03;
 
 
 public class MainActivity extends ActionBarActivity{
@@ -16,7 +17,13 @@ public class MainActivity extends ActionBarActivity{
 		setContentView(R.layout.activity_main);
 
 //		threadLocal();
-		threadSync();
+//		threadSync();
+		p03();
+
+	}
+	private void p03(){
+		P03 p03 = new P03();
+		p03.safeConstruction();
 	}
 
 	private void threadLocal(){
